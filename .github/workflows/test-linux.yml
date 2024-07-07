@@ -10,13 +10,8 @@ on:
   push:
     branches:
       - main
-      - canary
-      - v[0-9]+.x-staging
-      - v[0-9]+.x
-    paths-ignore:
-      - README.md
-      - .github/**
-      - '!.github/workflows/test-linux.yml'
+  schedule:
+    - cron:  '0 7 * * 0'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -34,12 +29,18 @@ permissions:
 
 jobs:
   test-linux:
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-24.04
+    name: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubicloud-standard-2, ubicloud-standard-4, ubicloud-standard-8, ubicloud-standard-16, ubicloud-standard-30]
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
         with:
           persist-credentials: false
+      - name: Show cpu info
+        run: lscpu
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d  # v5.1.0
         with:
